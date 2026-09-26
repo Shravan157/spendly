@@ -8,6 +8,20 @@ app.secret_key = 'spendly-secret-dev-key'
 
 
 # ------------------------------------------------------------------ #
+# Context Processors                                                    #
+# ------------------------------------------------------------------ #
+
+@app.context_processor
+def inject_user():
+    user_id = session.get("user_id")
+    if user_id:
+        from database.db import get_db
+        with get_db() as conn:
+            user = conn.execute('SELECT * FROM users WHERE id = ?', (user_id,)).fetchone()
+            return dict(current_user=user)
+    return dict(current_user=None)
+
+# ------------------------------------------------------------------ #
 # Routes                                                              #
 # ------------------------------------------------------------------ #
 
@@ -86,7 +100,7 @@ def privacy():
 def logout():
     session.clear()
     flash("You have been logged out.")
-    return redirect(url_for("landing"))
+    return redirect(url_for("login"))
 
 
 @app.route("/profile")
