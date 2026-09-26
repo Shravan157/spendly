@@ -54,7 +54,7 @@ body {
 a { color: inherit; text-decoration: none; }
 
 /* ------------------------------------------------------------------ */
-/* Navbar                                                              */
+/* Navbar                                                               */
 /* ------------------------------------------------------------------ */
 
 .navbar {
@@ -613,7 +613,146 @@ a { color: inherit; text-decoration: none; }
 }
 
 /* ------------------------------------------------------------------ */
-/* Footer                                                              */
+/* User Account UI                                                        */
+/* ------------------------------------------------------------------ */
+
+.user-avatar {
+    position: fixed;
+    bottom: 2rem;
+    left: 2rem;
+    width: 48px;
+    height: 48px;
+    background: var(--accent);
+    color: var(--paper);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 1.2rem;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    transition: transform 0.2s, background 0.2s;
+    z-index: 1000;
+    border: 2px solid var(--paper);
+}
+
+.user-avatar:hover {
+    transform: scale(1.1);
+    background: var(--ink);
+}
+
+.account-modal {
+    display: none;
+    position: fixed;
+    bottom: 5rem;
+    left: 2rem;
+    width: auto;
+    height: auto;
+    z-index: 2000;
+    justify-content: flex-start;
+    align-items: flex-start;
+}
+
+.account-modal .modal-overlay {
+    display: none;
+}
+
+.account-modal .modal-content {
+    position: relative;
+    background: var(--paper-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    width: 280px;
+    padding: 1.5rem;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    z-index: 2001;
+    text-align: center;
+}
+
+.account-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+}
+
+.avatar-large {
+    width: 50px;
+    height: 50px;
+    background: var(--accent);
+    color: var(--paper);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-display);
+    font-size: 1.4rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.user-name {
+    font-family: var(--font-display);
+    font-size: 1.2rem;
+    color: var(--ink);
+    margin-bottom: 0.25rem;
+}
+
+.user-email {
+    font-size: 0.85rem;
+    color: var(--ink-muted);
+    margin-bottom: 0.5rem;
+}
+
+.user-created {
+    font-size: 0.75rem;
+    color: var(--ink-faint);
+    margin-bottom: 1rem;
+}
+
+.btn-logout {
+    display: block;
+    width: 100%;
+    padding: 0.6rem;
+    background: var(--danger);
+    color: var(--paper);
+    border-radius: var(--radius-sm);
+    font-size: 0.9rem;
+    font-weight: 500;
+    text-align: center;
+    transition: opacity 0.2s;
+}
+
+.btn-logout:hover {
+    opacity: 0.9;
+}
+
+.account-modal .close-modal {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--ink-muted);
+    border: none;
+    font-size: 1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.account-modal .close-modal:hover {
+    color: var(--ink);
+}
+
+/* ------------------------------------------------------------------ */
+/* Footer                                                                  */
 /* ------------------------------------------------------------------ */
 
 .footer {
@@ -642,6 +781,26 @@ a { color: inherit; text-decoration: none; }
     color: var(--ink-faint);
 }
 
+.footer-links {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8rem;
+    color: var(--ink-faint);
+}
+
+.footer-links a {
+    transition: color 0.2s;
+}
+
+.footer-links a:hover {
+    color: var(--paper);
+}
+
+.footer-separator {
+    color: var(--ink-faint);
+}
+
 /* ------------------------------------------------------------------ */
 /* Responsive                                                          */
 /* ------------------------------------------------------------------ */
@@ -667,5 +826,6 @@ a { color: inherit; text-decoration: none; }
     .nav-links a:not(.nav-cta) { display: none; }
     .hero { padding: 3rem 1rem 2rem; }
 }
+
 .flash-messages { margin-bottom: 20px; font-family: "DM Sans", sans-serif; }
 .flash-message { padding: 12px; margin-bottom: 10px; border-radius: 8px; background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; text-align: center; }
