@@ -105,3 +105,67 @@ def seed_db():
         )
 
         conn.commit()
+
+def get_user_profile(user_id):
+    """
+    Retrieves full user details for the profile page.
+    """
+    with get_db() as conn:
+        return conn.execute('SELECT * FROM users WHERE id = ?', (user_id,)).fetchone()
+
+def get_user_expenses(user_id):
+    """
+    Retrieves all expenses for a user, ordered by date descending.
+    """
+    with get_db() as conn:
+        return conn.execute(
+            'SELECT * FROM expenses WHERE user_id = ? ORDER BY date DESC',
+            (user_id,)
+        ).fetchall()
+
+def get_spending_summary(user_id):
+    """
+    Returns total spent, total transactions, and top category.
+    """
+    with get_db() as conn:
+        # Total spent and total transactions
+        summary = conn.execute(
+            'SELECT SUM(amount) as total, COUNT(*) as count FROM expenses WHERE user_id = ?',
+            (user_id,)
+        ).fetchone()
+
+        # Top spending category
+        top_cat = conn.execute(
+            'SELECT category, SUM(amount) as total FROM expenses WHERE user_id = ? GROUP BY category ORDER BY total DESC LIMIT 1',
+            (user_id,)
+        ).fetchone()
+
+        return {
+            "total_spent": summary["total"] or 0,
+            "total_transactions": summary["count"] or 0,
+            "top_category": top_cat["category"] if top_cat else "None"
+        }
+
+def get_category_breakdown(user_id):
+    """
+    Returns totals and percentages for each category.
+    """
+    with get_db() as conn:
+        total_spent = conn.execute(
+            'SELECT SUM(amount) FROM expenses WHERE user_id = ?',
+            (user_id,)
+        ).fetchone()[0] or 0
+
+        breakdown = conn.execute(
+            'SELECT category, SUM(amount) as total FROM expenses WHERE user_id = ? GROUP BY category ORDER BY total DESC',
+            (user_id,)
+        ).fetchall()
+
+        results = []
+        for row in breakdown:
+            results.append({
+                "category": row["category"],
+                "amount": row["total"],
+                "percentage": (row["total"] / total_spent * 100) if total_spent > 0 else 0
+            })
+        return results
