@@ -1,10 +1,11 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, session
-from database.db import init_db, seed_db, create_user, get_user_by_email, get_user_profile, get_user_expenses, get_spending_summary, get_category_breakdown
+from database.db import init_db, seed_db, create_user, get_user_by_email, get_user_profile, get_user_expenses, get_spending_summary, get_category_breakdown, get_user_by_id
 import sqlite3
+import os
 from werkzeug.security import check_password_hash
 
 app = Flask(__name__)
-app.secret_key = 'spendly-secret-dev-key'
+app.secret_key = os.environ.get('SECRET_KEY', 'spendly-secret-dev-key')
 
 
 # ------------------------------------------------------------------ #
@@ -15,10 +16,8 @@ app.secret_key = 'spendly-secret-dev-key'
 def inject_user():
     user_id = session.get("user_id")
     if user_id:
-        from database.db import get_db
-        with get_db() as conn:
-            user = conn.execute('SELECT * FROM users WHERE id = ?', (user_id,)).fetchone()
-            return dict(current_user=user)
+        user = get_user_by_id(user_id)
+        return dict(current_user=user)
     return dict(current_user=None)
 
 # ------------------------------------------------------------------ #
@@ -124,19 +123,92 @@ def profile():
                            breakdown=breakdown)
 
 
-@app.route("/expenses/add")
+@app.route("/expenses/add", methods=["GET", "POST"])
 def add_expense():
-    return "Add expense — coming in Step 7"
+    if not session.get("user_id"):
+        return redirect(url_for("login"))
+
+    if request.method == "POST":
+        try:
+            amount = float(request.form.get("amount"))
+            category = request.form.get("category")
+            date = request.form.get("date")
+            description = request.form.get("description")
+
+            if not category or not date:
+                flash("Please fill in all required fields.")
+                return render_template("add_expense.html")
+
+            from database.db import add_expense as db_add_expense
+            db_add_expense(session["user_id"], amount, category, date, description)
+
+            flash("Expense added successfully!")
+            return redirect(url_for("profile"))
+        except (ValueError, TypeError):
+            flash("Invalid amount entered. Please enter a numeric value.")
+            return render_template("add_expense.html")
+
+    return render_template("add_expense.html")
 
 
-@app.route("/expenses/<int:id>/edit")
+@app.route("/expenses/<int:id>/edit", methods=["GET", "POST"])
 def edit_expense(id):
-    return "Edit expense — coming in Step 8"
+    if not session.get("user_id"):
+        return redirect(url_for("login"))
+
+    user_id = session["user_id"]
+
+    # Fetch the expense to ensure it belongs to the user
+    from database.db import get_db
+    with get_db() as conn:
+        expense = conn.execute(
+            'SELECT * FROM expenses WHERE id = ? AND user_id = ?',
+            (id, user_id)
+        ).fetchone()
+
+    if not expense:
+        flash("Expense not found or access denied.")
+        return redirect(url_for("profile"))
+
+    if request.method == "POST":
+        try:
+            amount = float(request.form.get("amount"))
+            category = request.form.get("category")
+            date = request.form.get("date")
+            description = request.form.get("description")
+
+            if not category or not date:
+                flash("Please fill in all required fields.")
+                return render_template("edit_expense.html", expense=expense)
+
+            from database.db import update_expense as db_update_expense
+            if db_update_expense(id, user_id, amount, category, date, description):
+                flash("Expense updated successfully!")
+                return redirect(url_for("profile"))
+            else:
+                flash("Failed to update expense.")
+                return render_template("edit_expense.html", expense=expense)
+        except (ValueError, TypeError):
+            flash("Invalid amount entered. Please enter a numeric value.")
+            return render_template("edit_expense.html", expense=expense)
+
+    return render_template("edit_expense.html", expense=expense)
 
 
 @app.route("/expenses/<int:id>/delete")
 def delete_expense(id):
-    return "Delete expense — coming in Step 9"
+    if not session.get("user_id"):
+        return redirect(url_for("login"))
+
+    user_id = session["user_id"]
+
+    from database.db import delete_expense as db_delete_expense
+    if db_delete_expense(id, user_id):
+        flash("Expense deleted successfully!")
+    else:
+        flash("Expense not found or access denied.")
+
+    return redirect(url_for("profile"))
 
 
 if __name__ == "__main__":
