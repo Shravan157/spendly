@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, session
-from database.db import init_db, seed_db, create_user, get_user_by_email
+from database.db import init_db, seed_db, create_user, get_user_by_email, get_user_profile, get_user_expenses, get_spending_summary, get_category_breakdown
 import sqlite3
 from werkzeug.security import check_password_hash
 
@@ -108,7 +108,20 @@ def logout():
 
 @app.route("/profile")
 def profile():
-    return "Profile page — coming in Step 4"
+    if not session.get("user_id"):
+        return redirect(url_for("login"))
+
+    user_id = session["user_id"]
+    user = get_user_profile(user_id)
+    summary = get_spending_summary(user_id)
+    expenses = get_user_expenses(user_id)
+    breakdown = get_category_breakdown(user_id)
+
+    return render_template("profile.html",
+                           user=user,
+                           summary=summary,
+                           expenses=expenses,
+                           breakdown=breakdown)
 
 
 @app.route("/expenses/add")
