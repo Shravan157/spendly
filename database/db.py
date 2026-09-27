@@ -1,7 +1,8 @@
 import sqlite3
 from werkzeug.security import generate_password_hash
+import os
 
-DATABASE_PATH = 'spendly.db'
+DATABASE_PATH = os.environ.get('DATABASE_PATH', 'spendly.db')
 
 def get_db():
     """
@@ -12,6 +13,52 @@ def get_db():
     conn.row_factory = sqlite3.Row
     conn.execute('PRAGMA foreign_keys = ON')
     return conn
+
+def get_user_by_id(user_id):
+    """
+    Retrieves a user by their ID.
+    Returns a sqlite3.Row object if found, otherwise None.
+    """
+    with get_db() as conn:
+        return conn.execute('SELECT * FROM users WHERE id = ?', (user_id,)).fetchone()
+
+def add_expense(user_id, amount, category, date, description):
+    """
+    Adds a new expense for a specific user.
+    Returns the ID of the created expense.
+    """
+    with get_db() as conn:
+        cursor = conn.execute(
+            'INSERT INTO expenses (user_id, amount, category, date, description) VALUES (?, ?, ?, ?, ?)',
+            (user_id, amount, category, date, description)
+        )
+        conn.commit()
+        return cursor.lastrowid
+
+def update_expense(expense_id, user_id, amount, category, date, description):
+    """
+    Updates an existing expense.
+    Ensures the expense belongs to the user before updating.
+    """
+    with get_db() as conn:
+        cursor = conn.execute(
+            'UPDATE expenses SET amount = ?, category = ?, date = ?, description = ? WHERE id = ? AND user_id = ?',
+            (amount, category, date, description, expense_id, user_id)
+        )
+        conn.commit()
+        return cursor.rowcount > 0
+
+def delete_expense(expense_id, user_id):
+    """
+    Deletes an expense if it belongs to the user.
+    """
+    with get_db() as conn:
+        cursor = conn.execute(
+            'DELETE FROM expenses WHERE id = ? AND user_id = ?',
+            (expense_id, user_id)
+        )
+        conn.commit()
+        return cursor.rowcount > 0
 
 def create_user(name, email, password_hash):
     """
